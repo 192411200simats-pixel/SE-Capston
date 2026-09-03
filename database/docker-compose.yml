@@ -1,6 +1,11 @@
 services:
+
+  # =========================
+  # MinIO Object Storage
+  # =========================
   minio:
-    image: minio/minio
+    image: minio/minio:latest
+    container_name: se-capston-minio
     ports:
       - "9100:9000"
       - "9101:9001"
@@ -11,8 +16,13 @@ services:
       - ./storage-data:/data
     command: server /data --console-address ":9001"
 
+
+  # =========================
+  # PostgreSQL Database
+  # =========================
   db:
     image: postgres:15
+    container_name: se-capston-db
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
@@ -22,22 +32,34 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
 
+
+  # =========================
+  # Node.js Backend
+  # =========================
   backend:
     image: node:18
+    container_name: se-capston-backend
     working_dir: /app
     volumes:
       - ../backend:/app
-      - ../frontend/web:/frontend/web
+      - ../web:/frontend/web
     ports:
       - "5000:5000"
     command: sh -c "npm install && node server.js"
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://admin:password123@db:5432/smile_db
+      DATABASE_URL: postgres://admin:password123@db:5432/smile_db
 
+
+  # =========================
+  # Jenkins + Android SDK
+  # =========================
   jenkins:
-    image: jenkins/jenkins:lts
+    build:
+      context: .
+      dockerfile: jenkins.Dockerfile
+    container_name: se-capston-jenkins
     user: root
     ports:
       - "8180:8080"
@@ -45,3 +67,14 @@ services:
     volumes:
       - ./jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+      ANDROID_SDK_ROOT: /opt/android-sdk
+
+
+# =========================
+# Network
+# =========================
+networks:
+  default:
+    name: se-capston-network
