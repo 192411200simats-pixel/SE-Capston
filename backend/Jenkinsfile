@@ -1,25 +1,27 @@
 pipeline {
 
-    agent {
-        docker {
-            image 'cimg/android:2025.06'
-            args '-v /root/.gradle:/root/.gradle'
-        }
-    }
+    agent any
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/192411200simats-pixel/SE-Capston.git'
+                echo 'SE-Capston repository already checked out by Jenkins.'
             }
         }
 
-        stage('Verify Environment') {
+        stage('Check Java') {
             steps {
                 sh 'java -version'
-                sh 'sdkmanager --list | head -30'
+            }
+        }
+
+        stage('Check Android SDK') {
+            steps {
+                sh 'echo ANDROID_HOME=$ANDROID_HOME'
+                sh 'ls -la $ANDROID_HOME'
+                sh 'ls -la $ANDROID_HOME/platforms'
+                sh 'ls -la $ANDROID_HOME/build-tools'
             }
         }
 
