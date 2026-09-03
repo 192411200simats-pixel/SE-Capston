@@ -1,23 +1,54 @@
 pipeline {
-    agent any
-    stages {
-        stage("Checkout") {
-            steps {
-                git branch: "main", url: "https://github.com/Abhishekbodapati551/smile-capstone.git"
-            }
-        }
-        stage("Build") {
-            steps {
-                sh "chmod +x gradlew"
-                // This command removes the offending file from the build workspace
-                sh "rm -f gradle.properties" 
-                sh "./gradlew assembleDebug"
-            }
+
+    agent {
+        docker {
+            image 'cimg/android:2025.06'
+            args '-v /root/.gradle:/root/.gradle'
         }
     }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/192411200simats-pixel/SE-Capston.git'
+            }
+        }
+
+        stage('Verify Environment') {
+            steps {
+                sh 'java -version'
+                sh 'sdkmanager --list | head -30'
+            }
+        }
+
+        stage('Build Android APK') {
+            steps {
+                sh 'chmod +x gradlew'
+                sh './gradlew assembleDebug --no-daemon'
+            }
+        }
+
+    }
+
     post {
+
         success {
-            archiveArtifacts artifacts: "app/build/outputs/apk/debug/*.apk", fingerprint: true
+            archiveArtifacts(
+                artifacts: 'app/build/outputs/apk/debug/*.apk',
+                fingerprint: true
+            )
+
+            echo 'Android APK build successful!'
+        }
+
+        failure {
+            echo 'Android APK build failed.'
+        }
+
+        always {
+            echo 'Jenkins pipeline completed.'
         }
     }
 }
