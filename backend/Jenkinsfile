@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+    stages {
+        stage("Checkout") {
+            steps {
+                git branch: "main", url: "https://github.com/Abhishekbodapati551/smile-capstone.git"
+            }
+        }
+        stage("Build") {
+            steps {
+                sh "chmod +x gradlew"
+                // This command removes the offending file from the build workspace
+                sh "rm -f gradle.properties" 
+                sh "./gradlew assembleDebug"
+            }
+        }
+    }
+    post {
+        success {
+            archiveArtifacts artifacts: "app/build/outputs/apk/debug/*.apk", fingerprint: true
+        }
+    }
+}
