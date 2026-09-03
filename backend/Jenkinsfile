@@ -2,6 +2,12 @@ pipeline {
 
     agent any
 
+    environment {
+        GRADLE_USER_HOME = "${WORKSPACE}/.gradle"
+        ANDROID_HOME = "/opt/android-sdk"
+        ANDROID_SDK_ROOT = "/opt/android-sdk"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -13,6 +19,7 @@ pipeline {
         stage('Check Java') {
             steps {
                 sh 'java -version'
+                sh 'echo JAVA_HOME=$JAVA_HOME'
             }
         }
 
@@ -25,10 +32,23 @@ pipeline {
             }
         }
 
+        stage('Prepare Gradle') {
+            steps {
+                sh '''
+                    mkdir -p "$GRADLE_USER_HOME"
+                    chmod +x gradlew
+                    echo "GRADLE_USER_HOME=$GRADLE_USER_HOME"
+                '''
+            }
+        }
+
         stage('Build Android APK') {
             steps {
-                sh 'chmod +x gradlew'
-                sh './gradlew assembleDebug --no-daemon'
+                sh '''
+                    ./gradlew assembleDebug \
+                        --no-daemon \
+                        --stacktrace
+                '''
             }
         }
 
